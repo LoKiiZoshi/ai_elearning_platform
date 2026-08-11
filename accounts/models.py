@@ -55,5 +55,31 @@ class User(AbstractUser):
         def is_admin_role(self):
             return self.role == self.Role.ADMIN
         
+class Profile(models.Model):
+    """Extended editable info about a user. Created automatically via signal/serializer"""
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name="profile")
+    
+    avatar = models.ImageField(upload_to="avatars/%Y/%m",blank=True,null=True)
+    bio = models.TextField(max_length=1000,blank=True)
+    headline = models.CharField(max_length=255,blank=True)
+    country = models.CharField(max_length=100,blank=True)
+    website = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
+    
+    
+    # Instructor -specific fields (harmless/blank for students)
+    expertise = models.CharField(max_length=255,blank=True)
+    years_of_experience = models.PositiveBigIntegerField(auto_now = True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ["-created_at"]
+        
+    def __str__(self):
+        return f"Profile<{self.user.email}"
+    
+    
+            
         
         
