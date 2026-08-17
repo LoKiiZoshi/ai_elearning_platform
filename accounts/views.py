@@ -46,3 +46,20 @@ class RegisterView(generics.CreateAPIView):
             },
             status=status.HTTTP_201_CREATED,
         )
+        
+        
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """POST/api/accounts/login/----email + password -> access/refresh tokens."""
+    Serializer_class = CustomTokenObtainPairSerializer
+    permissions_classes = [permissions.AllowAny]
+    
+class MeView(generics.RetrieveAPIView):
+    """GET/PATCH/accounts/me -- the authenticated user's own record."""
+    
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+    
+    
