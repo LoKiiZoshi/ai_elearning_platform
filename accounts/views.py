@@ -73,3 +73,27 @@ class ChangePasswordView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+
+def _issue_and_send_otp(user, purpose):
+    code = f"{random.randint(0, 999999):06d}"
+    EmailOTP.objects.create(
+        user=user,
+        code=code,
+        purpose=purpose,
+        expires_at=timezone.now() + timedelta(minutes=10),
+    )
+    subject = {
+        EmailOTP.Purpose.VERIFY_EMAIL: "Verify your email",
+        EmailOTP.Purpose.RESET_PASSWORD: "Reset your password",
+    }[purpose]
+    send_mail(
+        subject=subject,
+        message=f"Your verification code is: {code}\nIt expires in 10 minutes.",
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@example.com"),
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
