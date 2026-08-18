@@ -46,3 +46,54 @@ class RegisterView(generics.CreateAPIView):
             },
             status=status.HTTTP_201_CREATED,
         )
+        
+        
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """POST/api/accounts/login/----email + password -> access/refresh tokens."""
+    Serializer_class = CustomTokenObtainPairSerializer
+    permissions_classes = [permissions.AllowAny]
+    
+class MeView(generics.RetrieveAPIView):
+    """GET/PATCH/accounts/me -- the authenticated user's own record."""
+    
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+
+class ChangePasswordView(generics.GenericAPIView):
+    """POST /api/accounts/change-password/"""
+ 
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+ 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+
+def _issue_and_send_otp(user, purpose):
+    code = f"{random.randint(0, 999999):06d}"
+    EmailOTP.objects.create(
+        user=user,
+        code=code,
+        purpose=purpose,
+        expires_at=timezone.now() + timedelta(minutes=10),
+    )
+    subject = {
+        EmailOTP.Purpose.VERIFY_EMAIL: "Verify your email",
+        EmailOTP.Purpose.RESET_PASSWORD: "Reset your password",
+    }[purpose]
+    send_mail(
+        subject=subject,
+        message=f"Your verification code is: {code}\nIt expires in 10 minutes.",
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@example.com"),
+        recipient_list=[user.email],
+        fail_silently=True,
+    )
