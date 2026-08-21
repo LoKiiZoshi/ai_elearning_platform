@@ -96,4 +96,32 @@ def _issue_and_send_otp(user, purpose):
         from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@example.com"),
         recipient_list=[user.email],
         fail_silently=True,
-    )
+    )   
+
+
+class RequestOTPView(APIView):
+    """POST /api/accounts/otp/request/ -- {email, purpose}"""
+    
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request, *args,**kwargs):
+        serializer = RequestOTPSerializer(data = request.data)
+        serializer.is_valid(raise_exception =True)
+        User = User.objects.get(email = serializer.validated_data["email"])
+        _issue_and_send_otp(User,serializer.validated_data("purpose"))
+        return Response({"detail": "OTP sent."}, status=status.HTTP_200_OK)
+    
+    
+class VerifyOTP(APIView):
+    """POST /api/accounts/otp/verify/ -- {email, code , purpose, new_password}"""
+    
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request,*args,**kwargs):
+        serializer = VerifyOTPSerializer(data = request.data)
+        serializer.is_valid(raise_exception = True)
+        User = serializer.save()
+        return Response(
+    {"detail":"Verification successful.", "User": UserSerializer(User).data},
+    status = status.HTTP_200_OK,)
+        
