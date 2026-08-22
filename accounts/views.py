@@ -125,3 +125,27 @@ class VerifyOTP(APIView):
     {"detail":"Verification successful.", "User": UserSerializer(User).data},
     status = status.HTTP_200_OK,)
         
+        
+        
+class ProfileViewSet(viewsets.ModelViewSet):
+    """/api/accounts/profiles
+    Student & instructors can only  see/edit their own profile.
+    Admins can see/edit all profiles.
+    """
+    
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated,IsOwnerOrAdmin]
+    
+    def get_queryset(self):
+        User = self.request.user
+        if User.is_admin_role or User.is_staff:
+            return Profile.objects.select_related("user").all()
+        return Profile.objects.select_related("user").filter(User = User)
+    
+    def perform_create(self, serializer):
+        serializer.save(User = self.request.user)
+
+
+
+
+            
