@@ -147,5 +147,14 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 
-
-            
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """/api/accounts/users/ --admin -only directory of all users.
+    Read - only: role/activation change should go through dedicated
+    admin actions rather than free-form PATCH, to keep an audit trail."""
+    
+    queryset = User.objects.select_related("profile").all() 
+    serializer_class = UserAdminSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminRole]
+    filterset_fields = ["role","is_active","is_verified"]
+    search_fields = ["email","username","first_name","last_name"]
+    ordering_fields = ["created_at","email"]       
