@@ -50,3 +50,56 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         
         read_only_fields = ["id","role","is_verified","date_joined","created_at"]
+        
+        
+class UserAdminSerializer(UserSerializer):
+    """Adds admin -only writable fields (role, is_active)."""
+    
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ["is_active"]
+        read_only_fields = ["id","date_joined","created_at"]
+        
+        
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only =True,required =True)
+    password2 = serializers.CharField(write_only = True, required = True)
+    
+    
+    class Meta:
+        model = User
+        fields = [
+            "email",
+            "username",
+            "first_name",
+            "last_name",
+            "role",
+            "password",
+            "password2",
+        ]
+        
+        extra_kwargs = {
+            "role": {"required": False}
+        }
+        
+        
+        def validate_role(self, value):
+            # Prevent self-registration as admin.
+            if value == User.Role.ADMIN:
+                raise serializers.ValidationError("You cannot self-register as an admin.")
+            return value
+        
+        def validate(self, attrs):
+            if attrs["password"] != attrs.pop("password2"):
+                raise serializers.ValidationError({"password2":"Password do not match."})
+            self.validate_password(attrs["password"])
+            return attrs
+        
+        def create(self, validated_data):
+            password = validated_data.pop("password")
+            user = User(**validated_data)
+            user.set_password(password)
+            user.save()
+            Profile.objects.get_or_create(user=User)
+            return User
+        
+        
