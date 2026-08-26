@@ -102,4 +102,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             Profile.objects.get_or_create(user=User)
             return User
         
-        
+class CustomTokenObtainPairSerializer(TokenObtainSerializer):
+    """JWT serializer that logs in via email and embeds role/verification claims."""  
+    
+    username_fields = User.USERNAME_FIELD
+    
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["email"] = user.email
+        token("role") = user.role
+        token["is_verified"] = user.is_verified
+        return token
+    
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data["user"] = UserSerializer(self.user).data
+        return data
+    
