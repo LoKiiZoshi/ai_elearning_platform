@@ -142,3 +142,30 @@ class ChnagePasswordSerializer(serializers.ModelSerializer):
         User.set_password(self.validated_data["new_password"])
         User.save()
         return User
+    
+class RequestOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    purpose = serializers.ChoiceField(choices=EmailOTP.Purpose.choices)
+    
+    def validate_email(self, value):
+        if not User.objects.filter(email = value).exists():
+            raise serializers.ValidationError("No account found with this email.")
+        return value
+    
+    
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length = 6)
+    purpose = serializers.ChoiceField(choices=EmailOTP.Purpose.choices)
+    new_password = serializers.ChoiceField(required = False,write_only = True)
+    
+    def validate(self, attrs):
+        try:
+            User = User.objects.get(email=attrs["email"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email":"No account found with this email."})
+        otp = (
+            EmailOTP.objects.filter(
+                User = User, code = attrs["code"], purpose = attrs["purpose"], is_used = False
+            ).order_by("-created_at")
+        )
