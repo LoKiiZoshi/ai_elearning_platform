@@ -155,17 +155,58 @@ class RequestOTPSerializer(serializers.Serializer):
     
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    code = serializers.CharField(max_length = 6)
+    code = serializers.CharField(max_length=6)
     purpose = serializers.ChoiceField(choices=EmailOTP.Purpose.choices)
-    new_password = serializers.ChoiceField(required = False,write_only = True)
-    
+    new_password = serializers.CharField(required=False, write_only=True)
+
     def validate(self, attrs):
         try:
-            User = User.objects.get(email=attrs["email"])
+            user = User.objects.get(email=attrs["email"])
         except User.DoesNotExist:
-            raise serializers.ValidationError({"email":"No account found with this email."})
+            raise serializers.ValidationError({"email": "No account found with this email."})
+
         otp = (
             EmailOTP.objects.filter(
-                User = User, code = attrs["code"], purpose = attrs["purpose"], is_used = False
-            ).order_by("-created_at")
+                user=user,
+                code=attrs["code"],
+                purpose=attrs["purpose"],
+                is_used=False,
+            )
+            .order_by("-created_at")
+            .first()
         )
+
+        if otp is None:
+            raise serializers.ValidationError({"code": "Invalid code."})
+        if otp.is_expired:
+            raise serializers.ValidationError({"code": "Code has expired."})
+
+        if attrs["purpose"] == EmailOTP.Purpose.RESET_PASSWORD and not attrs.get("new_password"):
+            raise serializers.ValidationError({"new_password": "This field is required."})
+
+        if attrs.get("new_password"):
+            validate_password(attrs["new_password"])
+
+        attrs["user"] = user
+        attrs["otp"] = otp
+        return attrs
+ 
+    def save(self, **kwargs):
+        user = self.validated_data["user"]
+        otp = self.validated_data["otp"]
+        purpose = self.validated_data["purpose"]
+
+        otp.is_used = True
+        otp.save(update_fields=["is_used"])
+
+        if purpose == EmailOTP.Purpose.VERIFY_EMAIL:
+            user.is_verified = True
+            user.save(update_fields=["is_verified"])
+            return user
+
+        if purpose == EmailOTP.Purpose.RESET_PASSWORD:
+            user.set_password(self.validated_data["new_password"])
+            user.save(update_fields=["password"])
+            return user
+
+        return user
