@@ -47,3 +47,19 @@ class UserAdmin(BaseUserAdmin):
     ),
     
     
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "headline","country","years_of_experience","updated_at")
+    search_fields = ("user_email","headline","country","expertise")
+    list_filter = ("country",)
+
+
+
+@admin.register(EmailOTP)
+class EmailOTPAdmin(admin.ModelAdmin):
+    list_display = ("user", "purpose","code","is_used","expires_at","created_at")
+    list_filter = ("purpose","is_used")
+    search_fields = ("user__email","code")
+    readonly_fields = ("created_at",)
+    
+    
