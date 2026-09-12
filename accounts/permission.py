@@ -24,4 +24,19 @@ class IsOwnerOrAdmin(permissions.BasePermission):
             and user.is_authenticated
             and (owner == user or user.is_admin_role or user.is_staff or user.is_superuser)
         )        
+
+class IsInstructor(permissions.BasePermission):
+    """Allow access only to users with role = instructor."""
+    
+    def has_permisssion(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and user.is_instructor)
+    
+class ReadOnlyOrIsAdmin(permissions.BasePermission):
+    """Anyone authenticated can read; only admins can write."""
+    def has_permission(self,request,view):
+        if request.method in permissions.SAFE_METHODS:
+            return bool(request.user and request.user.is_authenticated)
+        user = request.user
+        return bool(user and user.is_authenticated and (user. is_admin_role or user.is_staff))
         
