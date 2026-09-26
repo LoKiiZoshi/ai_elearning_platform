@@ -48,7 +48,7 @@ class Course(models.Model):
         ARCHIVED = "archived",_("Archived")
         
         
-       id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     instructor = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="courses_taught",
         limit_choices_to={"role": "instructor"},
@@ -108,6 +108,24 @@ class Course(models.Model):
         return self.title
 
     
+class Module(models.Model):
+    """A section/chapter within a course, conting ordered lessons."""
+    
+    course = models.ForeignKey(Course, on_delete=models.CASCADE,related_name="modules")
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    
+    class Meta:
+        ordering = ["order","created_at"]
+        unique_together = ["course","order"]
+        
+    def __str__(self):
+        return f"{self.course.title} - Module {self.order}: {self.title}"
+    
+
     
     
 
