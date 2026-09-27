@@ -126,7 +126,27 @@ class Module(models.Model):
         return f"{self.course.title} - Module {self.order}: {self.title}"
     
 
-    
-    
+
+
+
+
+
+ 
+class Lesson(models.Model):
+    class ContentType(models.TextChoices):
+        VIDEO = "video", _("Video")
+        TEXT = "text", _("Text/Article")
+        QUIZ = "quiz", _("Quiz")
+        ASSIGNMENT = "assignment", _("Assignment")
+        RESOURCE = "resource", _("Downloadable Resource")
+ 
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name="lessons")
+    title = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=20, choices=ContentType.choices, default=ContentType.VIDEO)
+ 
+    video_url = models.URLField(blank=True)
+    text_content = models.TextField(blank=True)
+    resource_file = models.FileField(upload_to="lesson_resources/%Y/%m/", blank=True, null=True)
+ 
 
 
