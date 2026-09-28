@@ -148,5 +148,20 @@ class Lesson(models.Model):
     text_content = models.TextField(blank=True)
     resource_file = models.FileField(upload_to="lesson_resources/%Y/%m/", blank=True, null=True)
  
+    duration_minutes = models.PositiveIntegerField(default=0)
+    order = models.PositiveIntegerField(default=0)
+    is_preview = models.BooleanField(default=False, help_text="Viewable without enrolling.")
+ 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+ 
+    class Meta:
+        ordering = ["order", "created_at"]
+        unique_together = [("module", "order")]
+ 
+    def __str__(self):
+        return f"{self.module.course.title} — {self.title}"
+ 
+ 
 
 
