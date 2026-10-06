@@ -164,4 +164,22 @@ class Lesson(models.Model):
  
  
 
+class Enrollment(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = "active", _("Active")
+        COMPLETED = "completed", _("Completed")
+        CANCELLED = "cancelled", _("Cancelled")
+ 
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name="enrollments")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="enrollments")
+ 
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    progress_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
+ 
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    last_accessed_at = models.DateTimeField(null=True, blank=True)
 
