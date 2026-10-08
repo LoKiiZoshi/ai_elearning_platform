@@ -182,4 +182,11 @@ class Enrollment(models.Model):
     enrolled_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     last_accessed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ["-enrolled_at"]
+        unique_together = [("student","course")]
+        
+    def __str__(self):
+        return f"{self.student.email} ->{self.course.title} ({self.status})"
 
