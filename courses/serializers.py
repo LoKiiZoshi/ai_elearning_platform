@@ -14,3 +14,12 @@ class InstructorMinSerializer(serializers.ModelSerializer):
         fields = ["id","Username","first_name","last_name","email"]
         read_only_fields = fields
         
+class CategorySerializer(serializers.ModelSerializer):
+    course_count = serializers.IntegerField(source="courses.count", read_only=True)
+ 
+    class Meta:
+        model = Category
+        fields = [
+            "id", "name", "slug", "description", "icon", "parent", "course_count", "created_at",
+        ]
+        read_only_fields = ["id", "slug", "created_at"]
