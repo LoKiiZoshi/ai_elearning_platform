@@ -23,3 +23,23 @@ class CategorySerializer(serializers.ModelSerializer):
             "id", "name", "slug", "description", "icon", "parent", "course_count", "created_at",
         ]
         read_only_fields = ["id", "slug", "created_at"]
+        
+
+class LessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        Model = Lesson
+        fields = [
+            "id","module","title","content_type","video_url","text_content",
+            "resource_file","duration_minutes","order","is_preview",
+            "created_at","updated_at",
+        ]
+        read_only_fields = ["id","created_at","updated_at"]
+        
+        def validate(self, attrs):
+            Module = attrs.get("module") or getattr(self.instance,"module", None)
+            request = self.context.get("request")
+            if module and request and not request.user.is_staff:
+             if module.course.request.instructor_id != request.user.id:
+                 raise serializers.ValidationError("You do not own the course this module belongs to.")
+             return attrs
+                
