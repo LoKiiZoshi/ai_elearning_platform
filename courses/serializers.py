@@ -42,4 +42,24 @@ class LessonSerializer(serializers.ModelSerializer):
              if module.course.request.instructor_id != request.user.id:
                  raise serializers.ValidationError("You do not own the course this module belongs to.")
              return attrs
+         
+         
+class LessonPreviewSerializer(serializers.ModelSerializer):
+    """Used for non-enrolled students: hides content unless is_preview=True."""
+    video_url = serializers.SerializerMetaclass()
+    text_content = serializers.SerializerMethodField()
+     
+    class meta:
+        model = Lesson
+        fields = [
+            "id","module","title","content_type","video_url","text_content",
+            "duration_minutes","order","is_preview",
+        ]
+        
+        def get_video_url(self,obj):
+            return obj.video_url if obj.is_preview else None
+        
+        def get_text_content(self,obj):
+            return obj.text_content if obj.is_preview else None
+                
                 
