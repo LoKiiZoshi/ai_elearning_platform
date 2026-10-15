@@ -62,4 +62,20 @@ class LessonPreviewSerializer(serializers.ModelSerializer):
         def get_text_content(self,obj):
             return obj.text_content if obj.is_preview else None
                 
-                
+class moduleSerializer(serializers.ModelSerializer):
+    lessons = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Module
+        fields = ["id", "course", "title", "description","order","lessons","created_at"]
+        read_only_fields = ["id","created_at"]
+        
+    def get_lessons(self, obj):
+        request = self.context.get("request")
+        enrolled = self.context.get("is_enrolled", False)
+        if request and (enrolled or (request.user.is_authenticated and (
+            request.user.is_staff or obj.course.instructor_id == request.user.id
+        ))):
+            return LessonSerializer(obj.lessons.all(), many=True, context=self.context).data
+        return LessonPreviewSerializer(obj.lessons.all(), many=True, context=self.context).data
+ 
