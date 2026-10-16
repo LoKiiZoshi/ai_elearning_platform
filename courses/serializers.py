@@ -78,4 +78,12 @@ class moduleSerializer(serializers.ModelSerializer):
         ))):
             return LessonSerializer(obj.lessons.all(), many=True, context=self.context).data
         return LessonPreviewSerializer(obj.lessons.all(), many=True, context=self.context).data
+    def validate(self, attrs):
+        course = attrs.get("course") or getattr(self.instance, "course", None)
+        request = self.context.get("request")
+        if course and request and not request.user.is_staff:
+            if course.instructor_id != request.user.id:
+                raise serializers.ValidationError("You do not own this course.")
+            return attrs
+    
  
