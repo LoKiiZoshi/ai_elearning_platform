@@ -85,5 +85,27 @@ class moduleSerializer(serializers.ModelSerializer):
             if course.instructor_id != request.user.id:
                 raise serializers.ValidationError("You do not own this course.")
             return attrs
+        
+        
+class ReviewSerializer(serializers.ModelSerializer):
+    student = InstructorMiniSerializer(read_only = True)
     
+    class Meta:
+        model = Review
+        fields = ["id","course","rating","comment","created_at","updated_at"]
+        read_only_fields = ["id","student","created_at","updated_at"]
+        
+        def validate_course(self, course):
+            request = self.context["request"]
+            if not Enrollment.objects.filter(student=request.user,course=course).exists():
+                raise serializers.ValidationError("You must be enrolled in this course to revieww it.")
+            return course
+        
+        def create(self, validated_data):
+            validated_data["student"] = self.context["request"].User 
+            review = super().create(validated_data)
+            self._refresh_course_rating(review.course) 
+            return review
+        
+          
  
