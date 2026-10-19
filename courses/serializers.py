@@ -107,5 +107,17 @@ class ReviewSerializer(serializers.ModelSerializer):
             self._refresh_course_rating(review.course) 
             return review
         
+        
+        def update(self, instance, validated_data):
+            review = super().update(instance, validated_data)
+            self._refresh_course_rating(review.course)
+            return review
+ 
+        @staticmethod
+        def _refresh_course_rating(course):
+             avg = course.reviews.aggregate(avg=Avg("rating"))["avg"] or 0
+             course.average_rating = round(avg, 2)
+             course.save(update_fields=["average_rating"])
+        
           
  
