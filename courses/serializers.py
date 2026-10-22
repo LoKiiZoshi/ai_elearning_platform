@@ -119,5 +119,20 @@ class ReviewSerializer(serializers.ModelSerializer):
              course.average_rating = round(avg, 2)
              course.save(update_fields=["average_rating"])
         
-          
+class CourseListSerializer(serializers.ModelSerializer):
+    """Lightweight representation for course listing/serch page."""
+    
+    instructor = InstructorMinSerializer(read_only = True)
+    Category = CategorySerializer(read_only = True)
+    
+    class Meta:
+        model = Course
+        fields = [
+            "id", "title","slug","subtitle","thumbanail","instructor","category",
+            "level","status","price","is_free","average_rating","total_enrollments",
+            "total_duration_minutes","created_at",
+        ]
+        read_only_fields = fields
+        
+
  
