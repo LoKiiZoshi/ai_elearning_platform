@@ -135,4 +135,17 @@ class CourseListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
         
 
- 
+class CourseDetailSerializer(serializers.ModelSerializer):
+    instructor = InstructorMinSerializer(read_only =True)
+    category = CategorySerializer(read_only =True)
+    category_id = serializers.PrimaryKeyRelatedField(queryset = objects.all,source ="category", write_only = True, required =False)
+    modules = serializers.SerializerMethodField()
+    reviews = ReviewSerializer(many = True,read_only = True)
+    is_enrolled = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Course
+        fields = [
+            "id"
+        ]
+     
