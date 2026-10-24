@@ -146,6 +146,29 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = [
-            "id"
+            "id","title","slug","subtitle","description","thumbnail","promo_video_url",
+            "instructor","category","category_id","level","language","status",
+            "price","is_free","requirements","what_you_will_learn",
+            "total_duration_minutes","average_rating","total_enrollments",
+            "modules","reviews","is_enrolled","published_at","created_at","updated_at"
         ]
-     
+        read_only_fields = [
+            "id","slug","instructor","average_rating","total_enrollments",
+            "published_at","created_at","updated_at",
+        ]
+        
+    def get_is_enrolled(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return Enrollment.objects.filter(student = request.user, Course=obj).exists()
+    
+    def get_modules(self, obj):
+        context = dict(self.context)
+        context["is_enrolled"] = self.get_is_enrolled(obj)
+        return moduleSerializer(obj.modules.all(), many = True, context = context).data
+    
+    def create(self, validated_data):
+        validated_data["instructor"] = self.context["request"].user
+        return super().create(validated_data)
+         
