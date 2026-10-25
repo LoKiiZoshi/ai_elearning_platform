@@ -171,4 +171,14 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data["instructor"] = self.context["request"].user
         return super().create(validated_data)
-         
+    
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    course = CourseListSerializer(read_only=True)
+    course_id = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.filter(status=Course.Status.PUBLISHED),
+        source="course", write_only=True,
+    )
+    student = InstructorMiniSerializer(read_only=True)
+     
+  
