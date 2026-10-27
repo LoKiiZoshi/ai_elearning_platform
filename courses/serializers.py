@@ -180,5 +180,26 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         source="course", write_only=True,
     )
     student = InstructorMiniSerializer(read_only=True)
+    
+    class Meta:
+        model = Enrollment
+        fields = [
+            "id","student","course","coure_id","status","progress_percentage",
+            "enrolled_at","completed_at","last_accessed_at",   
+        ]
+        read_only_fields = [
+            "id","student","status","progress_percentage",
+            "enrolled_at","completed_at","last_accessses_at",
+        ]
+        
+        
+        def create(self, validated_data):
+            student = self.context["request"].User
+            course = validated_data["course"]
+            enrollment, created = Enrollment.objects.get_or_create(student, course = course)
+            
+            if not created:
+                raise serializers.ValidationError("You are already enrolled in course.")
+            course
+        
      
-  
