@@ -200,6 +200,9 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             
             if not created:
                 raise serializers.ValidationError("You are already enrolled in course.")
-            course
+            course.total_enrollments = course.enrollments.count()
+            course.save(update_fields=["total_enrollments"])
+            return enrollment
         
+         
      
