@@ -30,3 +30,25 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["create","update","partial_update","destory"]:
             return [permissions.AllowAny()]
+        
+class CourseViewSet(viewsets.ModelViewSet):
+    """/api/courses/courses/
+    -Public: list/retrieve published courses.
+    -Instructors:full CRUD on their own courses.
+    -Adminis: full Crud on everything."""
+    
+    permission_classes = [IsInstructorOrReadOnly, IsCourseOwnerOrReadOnly]
+    lookup_field = "slug"
+    filterset_fields = ["category","level","status","is_free","instructor"]
+    search_fields = ["title","subtitle","description"]
+    ordering_fields = ["created_at","price","average_rating","total_enrollments"]
+    
+    def get_queryset(self):
+        qs = Course.objects.select_related("instructor","category").prefetch_related("modules__lessons","reviews")
+        user = self.request.user
+        if user.is_authenticated and (user.is_staff or user.is_admin_role):
+            return qs
+        if user.is_authenticated and user.is_instructor:
+            return qs.filter(Q(status=Course.status.PUBLISHED) | Q(instructor = user))
+        return qs.filter(status = Course.status.PUBLISHED)
+    
