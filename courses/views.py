@@ -51,4 +51,35 @@ class CourseViewSet(viewsets.ModelViewSet):
         if user.is_authenticated and user.is_instructor:
             return qs.filter(Q(status=Course.status.PUBLISHED) | Q(instructor = user))
         return qs.filter(status = Course.status.PUBLISHED)
+
+    def get_serializer(self):
+        if self.action == "list":
+            return CourseListSerializer
+        return CourseDetailSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(instructor = self.request.user)
+        
+        @action(detail=True, method = ["post"], permissions_classes = [permissions.IsAuthenticated])
+        def publish(self, request, slug = None):
+            Course = self.get_object()
+            if Course.instructor_id != request.user.id and not request.user.is_staff:
+                return Response({"detail":"Not allowed."},status=status.HTTP_403_FORBIDDEN)
+            if not course.module.exists():
+                return Response(
+                    {"detail":"Add at least one module before publishing."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            from django.utils import timezone
+            course.status = Course.status.PUBLISHED
+            course.published_at = timezone.now()
+            Course.save(update_fields = ["status","published_at"])
+            return Response(CourseDetailSerializer(course, context={"request": request}).data)
+        @action(detail = False,methods = ["get"], permissions_classes = [permissions.IsAuthenticated])
+        def my_courses(self, request):
+            courses = Course.objects.filter(instructor = request.user)
+            page = self.paginate_queryset(courses)
+            serializer = CourseListSerializer(page or courses, many = True, context ={"request":request})
+            return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
+        
     
