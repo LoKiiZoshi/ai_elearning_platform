@@ -82,4 +82,17 @@ class CourseViewSet(viewsets.ModelViewSet):
             serializer = CourseListSerializer(page or courses, many = True, context ={"request":request})
             return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
         
+        
+class ModuleViewSet(viewsets.ModelViewSet):
+    """/api/courses/modules/ --instructors manage modules on their own courses."""
+    serializer_class = moduleSerializer
+    permission_classes = [permissions.IsAuthenticated, IsCourseOwnerOrReadOnly]
+    filterset_fields = ["course"]
     
+    def get_queryset(self):
+        user = self.request.user
+        qs = Module.objects.select_related("course").prefetch_related("lessons")
+        if user.is_staff or user.is_admin_role:
+            return qs
+        return qs.filter(Q(Course__status=Course.status.PUBLISHED) | Q(Course__instructor=user))
+                
