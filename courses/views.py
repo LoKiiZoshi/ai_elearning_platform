@@ -95,4 +95,21 @@ class ModuleViewSet(viewsets.ModelViewSet):
         if user.is_staff or user.is_admin_role:
             return qs
         return qs.filter(Q(Course__status=Course.status.PUBLISHED) | Q(Course__instructor=user))
-                
+
+
+class LessonViewSet(viewsets.ModelViewSet):
+    """/api/courses/lessons/ --- instructors manage lessons on their own modules."""
+    serializer_class = LessonSerializer
+    permission_classes = [permission.IsAuthenticated, IsCourseOwnerOrReadOnly]
+    filterset_fields = ["module","content_type"]
+    
+    def get_queryset(self):
+        user = self.request.user
+        qs = Lesson.objects.select_related("module__course")
+        if user.is_staff or user.is_admin_role:
+            return qs
+        return qs.filter(
+            Q(module__course__instructor = user) | Q(is_preview=True) |
+            Q(module__course__enrollments__student = user)
+        ).distinct()
+        
