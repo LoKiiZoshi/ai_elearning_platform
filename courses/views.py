@@ -113,3 +113,22 @@ class LessonViewSet(viewsets.ModelViewSet):
             Q(module__course__enrollments__student = user)
         ).distinct()
         
+class EnrollmentViewSet(viewsets.ModelViewSet):
+  """/api/courses/enrollments/
+  Students see & create their own enrollments; instructors see enrollments
+  in the courses they teach; admin see everything."""
+  serializer_class = EnrollmentSerializer
+  permission_classes = [permissions.IsAuthenticated]
+  http_method_names = ["get","post","patch","delete","head","options"]
+  filterset_fields = ["status","course"]
+  
+  def get_queryset(self):
+      User = self.request.user
+      qs = Enrollment.objects.select_related("student","course")
+      if User.is_instructor:
+          return qs.filter(Q(student=User) | Q(Course__instructor = User))
+      return qs.filter(student = User)
+  
+  def perform_create(self, serializer):
+      serializer.save(student = self.request.user)
+            
