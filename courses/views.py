@@ -131,4 +131,19 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
   
   def perform_create(self, serializer):
       serializer.save(student = self.request.user)
+      
+class ReviewViewSet(viewsets.ModelViewSet):
+    """/api/courses/reviews/ -- enrolled students can review; public can read."""
+    
+    serializer_class = ReviewSerializer
+    filterset_fields = ["course","rating"]
+    
+    def get_permissions(self):
+           if self.action in ["create","update","partial_update","destroy"]:
+               return [permissions.IsAuthenticated()]
+           return [permissions.AllowAny()]
+    
+    def get_queryset(self):
+        return Review.objects.select_related("student","course")
+    
             
