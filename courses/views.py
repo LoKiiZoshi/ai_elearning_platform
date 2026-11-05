@@ -146,4 +146,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Review.objects.select_related("student","course")
     
+    def perform_update(self, serializer):
+        if serializer.instance.student_id != self.request.user.id and not self.request.user.is_staff:
+            raise PermissionDenied("You can only edit your own review.")
+        serializer.save()
+        
+        def perform_destro(self, instance):
+            if instance.student_id != self.request.user.id and not self.request.user.is_staff:
+                raise PermissionDenied("You can only delete your own review.")
+            instance.delete()
+
+
+    
             
