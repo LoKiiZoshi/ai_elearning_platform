@@ -35,4 +35,16 @@ class CourseAdmin(admin.ModelAdmin):
     inlines = [ModuleInline]
     autocomplete_fields = ["instructor","category"]
     
+@admin.register(Module)
+class ModuleAdmin(admin.ModelAdmin):
+    list_display = ("title","course","order")
+    list_filter = ("course",)
+    search_fields = ("title","course__title")
+    inlines = [LessonInline]
+    
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ("title","module","content_type","order","duration_minutes","is_preview")
+    list_filter = ("content_type","is_preview")
+    search_fields = ("title","module__title","module_course_title")
     
